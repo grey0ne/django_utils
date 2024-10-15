@@ -1,0 +1,115 @@
+from ninja.pagination import PaginationBase
+from typing import Any, Type, Sequence
+from dataorm.types import DataclassProtocol, TransformListFunc
+from dataorm.queries import typed_data_list
+from datetime import datetime
+from django.db import models
+from django.db.models import Q
+
+
+DEFAULT_PER_PAGE = 30
+
+class EfficientPagination[ResultType](PaginationBase):
+    def __init__(
+        self,
+        *,
+        response_type: Type[DataclassProtocol],
+        transform: TransformListFunc | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self.response_type = response_type
+        self.transform = transform
+        super().__init__(**kwargs)
+
+    def paginate_queryset(self, queryset: models.QuerySet[Any], pagination: Any, **params: Any) -> Any:
+        raise NotImplemented('No sync pagination in this project')
+
+    async def transform_queryset(
+        self, queryset: models.QuerySet[Any]
+    ):
+        if self.transform is not None:
+            return self.transform(queryset)
+        return await typed_data_list(queryset, self.response_type)
+
+
+class IDPagination[ResultType](EfficientPagination[ResultType]):
+
+    class Input(Schema):  # type: ignore
+        """
+        Pagination is reversed, from recent ot older records, hence the field names
+        """
+        to_id: int | None = None
+        per_page: int = DEFAULT_PER_PAGE
+
+    class Output(Schema):  # type: ignore
+        items: list[ResultType]
+        last_id: int | None
+
+    def get_result(self, result: Sequence[DataclassProtocol]) -> dict[str, Any]:
+        return {
+            'items': result,
+            'last_id': result[-1].id if result else None,  # type: ignore
+        }
+
+    async def apaginate_queryset(
+        self, queryset: models.QuerySet[Any], pagination: Input, **params: Any
+    ) -> dict[str, Any]:
+        if pagination.to_id is not None:
+            queryset = queryset.filter(id__lt=pagination.to_id)
+        result_qset = queryset.order_by('-id')[: pagination.per_page]
+        result = await typed_data_list(result_qset, self.response_type)  # type: ignore
+        return self.get_result(result)
+
+
+class DateIDPagination[ResultType](EfficientPagination[ResultType]):
+
+    def __init__(self, *, date_field: str, **kwargs: Any) -> None:
+        self.date_field = date_field
+        super().__init__(**kwargs)
+
+    class Input(Schema):  # type: ignore
+        """
+        Pagination is reversed, from recent ot older records, hence the field names
+        """
+        to_timestamp: int | None = None
+        to_id: int | None = None
+        per_page: int = DEFAULT_PER_PAGE
+
+    class Output(Schema):  # type: ignore
+        items: list[ResultType]
+        last_id: int | None
+        last_timestamp: int | None
+
+    def get_timestamp(self, item: ResultType) -> int:
+        result = int(getattr(item, self.date_field).timestamp() * 1000000)
+        return result
+
+    def filter_to_timestamp(self, qset: models.QuerySet[Any], pagination: Input) -> models.QuerySet[Any]:
+        if pagination.to_timestamp is not None:
+            ms = pagination.to_timestamp # timestamp in microseconds
+            to_date = datetime.fromtimestamp(ms//1000000).replace(microsecond=ms%1000000) # to avoid floating point conversion
+            date_lt_filter = Q(**{f'{self.date_field}__lt': to_date})
+            id_lt_filter = Q(
+                id__lt=pagination.to_id,
+                **{f'{self.date_field}': to_date},
+            )
+            qset = qset.filter(date_lt_filter | id_lt_filter)
+
+        qset = qset.order_by(f'-{self.date_field}', '-id')[:pagination.per_page]
+        return qset
+
+    def get_result(self, result: Sequence[ResultType]) -> dict[str, Any]:
+        last_elem = result[-1] if len(result) > 0 else None
+        return {
+            'items': result,
+            'last_id': last_elem.id if last_elem else None,  # type: ignore
+            'last_timestamp': self.get_timestamp(last_elem) if last_elem else None,
+        }
+
+    async def apaginate_queryset(
+        self, queryset: models.QuerySet[Any], pagination: Input, **params: Any
+    ) -> dict[str, Any]:
+        queryset = self.filter_to_timestamp(queryset, pagination)
+        result = await self.transform_queryset(queryset)
+        return self.get_result(result)
+
