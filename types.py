@@ -12,7 +12,12 @@ class DataclassProtocol(Protocol):
     # the most reliable way to ascertain that something is a dataclass
     __dataclass_fields__: ClassVar[dict[str, Any]]
 
+@dataclass(kw_only=True, slots=True, frozen=True)
+class ModelProtocol:
+    id: IdType
+
 SingleItemResponse = TypeVar('SingleItemResponse', bound=DataclassProtocol)
+ResultType = TypeVar('ResultType', bound=ModelProtocol)
 
 ResultKey = str | int
 

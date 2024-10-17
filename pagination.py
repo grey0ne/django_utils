@@ -1,6 +1,6 @@
 from ninja.pagination import PaginationBase
 from typing import Any, Type, Sequence
-from dataorm.types import DataclassProtocol, TransformListFunc
+from dataorm.types import DataclassProtocol, TransformListFunc, ModelProtocol
 from dataorm.queries import typed_data_list
 from datetime import datetime
 from django.db import models
@@ -9,11 +9,11 @@ from django.db.models import Q
 
 DEFAULT_PER_PAGE = 30
 
-class EfficientPagination[ResultType](PaginationBase):
+class EfficientPagination[ResultType: DataclassProtocol](PaginationBase):
     def __init__(
         self,
         *,
-        response_type: Type[DataclassProtocol],
+        response_type: Type[ResultType],
         transform: TransformListFunc | None = None,
         **kwargs: Any,
     ) -> None:
@@ -32,23 +32,23 @@ class EfficientPagination[ResultType](PaginationBase):
         return await typed_data_list(queryset, self.response_type)
 
 
-class IDPagination[ResultType](EfficientPagination[ResultType]):
+class IDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
 
-    class Input(Schema):  # type: ignore
+    class Input(PaginationBase.Input):
         """
         Pagination is reversed, from recent ot older records, hence the field names
         """
         to_id: int | None = None
         per_page: int = DEFAULT_PER_PAGE
 
-    class Output(Schema):  # type: ignore
+    class Output(PaginationBase.Output):
         items: list[ResultType]
         last_id: int | None
 
-    def get_result(self, result: Sequence[DataclassProtocol]) -> dict[str, Any]:
+    def get_result(self, result: Sequence[ResultType]) -> dict[str, Any]:
         return {
             'items': result,
-            'last_id': result[-1].id if result else None,  # type: ignore
+            'last_id': result[-1].id if result else None,
         }
 
     async def apaginate_queryset(
@@ -57,17 +57,17 @@ class IDPagination[ResultType](EfficientPagination[ResultType]):
         if pagination.to_id is not None:
             queryset = queryset.filter(id__lt=pagination.to_id)
         result_qset = queryset.order_by('-id')[: pagination.per_page]
-        result = await typed_data_list(result_qset, self.response_type)  # type: ignore
+        result = await typed_data_list(result_qset, self.response_type)
         return self.get_result(result)
 
 
-class DateIDPagination[ResultType](EfficientPagination[ResultType]):
+class DateIDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
 
     def __init__(self, *, date_field: str, **kwargs: Any) -> None:
         self.date_field = date_field
         super().__init__(**kwargs)
 
-    class Input(Schema):  # type: ignore
+    class Input(PaginationBase.Input):
         """
         Pagination is reversed, from recent ot older records, hence the field names
         """
@@ -75,7 +75,7 @@ class DateIDPagination[ResultType](EfficientPagination[ResultType]):
         to_id: int | None = None
         per_page: int = DEFAULT_PER_PAGE
 
-    class Output(Schema):  # type: ignore
+    class Output(PaginationBase.Output):
         items: list[ResultType]
         last_id: int | None
         last_timestamp: int | None
@@ -102,7 +102,7 @@ class DateIDPagination[ResultType](EfficientPagination[ResultType]):
         last_elem = result[-1] if len(result) > 0 else None
         return {
             'items': result,
-            'last_id': last_elem.id if last_elem else None,  # type: ignore
+            'last_id': last_elem.id if last_elem else None,
             'last_timestamp': self.get_timestamp(last_elem) if last_elem else None,
         }
 
