@@ -9,10 +9,9 @@ from django.db.models import Q
 
 from dataorm.types import (
     NestedDict, JsonSchema, FlatDict, ResultKey,
-    DataclassProtocol, URLAnnotation, ResultType
+    DataclassProtocol, URLAnnotation, ResultType, FieldName
 )
 
-FieldName = str
 
 def is_json_schema_dict(field_type: Any) -> bool:
     type_args = get_args(field_type)

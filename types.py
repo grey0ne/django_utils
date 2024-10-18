@@ -6,6 +6,7 @@ TransformListFunc = Callable[[models.QuerySet[Any]], Sequence[Any]]
 TransformSingleFunc = Callable[[models.QuerySet[Any]], Any]
 
 IdType = int
+FieldName = str
 
 class DataclassProtocol(Protocol):
     # checking for this attribute is currently
