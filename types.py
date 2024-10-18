@@ -31,6 +31,7 @@ NestedDict = dict[ResultKey, dict[ResultKey, T]]
 FlatDict = dict[ResultKey, T]
 
 NestedOrFlatDict = NestedDict[T] | FlatDict[T]
+ResultType = TypeVar("ResultType", bound=DataclassProtocol)
 
 URLAnnotation = 'URLAnnotation'
 

@@ -9,7 +9,7 @@ from django.db.models import Q
 
 from dataorm.types import (
     NestedDict, JsonSchema, FlatDict, ResultKey,
-    DataclassProtocol, URLAnnotation
+    DataclassProtocol, URLAnnotation, ResultType
 )
 
 FieldName = str
@@ -175,10 +175,9 @@ async def bulk_create_to_list(
     return result
 
 
-
 def get_field_from_json(type_class: type, data: dict[str, Any] | None):
     """
-    Function converts plain dictionary to dataclass object
+    Converts plain dictionary to dataclass object
     Works recursively for nested dataclasses
     """
     if data is None:
@@ -194,19 +193,23 @@ def get_field_from_json(type_class: type, data: dict[str, Any] | None):
         return None
     return type_class(**kw)
 
+def convert_dict_to_json(data: dict[str, Any], type_class: type) -> dict[str, Any]:
+    return { k: get_field_from_json(type_class, v) for k, v in data.items() }
+
+def convert_list_to_json(data: list[Any], type_class: type) -> list[Any]:
+    return [ get_field_from_json(type_class, v) for v in data ]
 
 def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
+    """
+    Converts nested dataclasses to plain dictionary for serialization
+    """
     type_args = get_args(field_type)
     if field_data is None:
         return None
     elif is_json_schema_dict(field_type):
-        return {
-            k: get_field_from_json(type_args[1], v) for k, v in field_data.items()
-        }
+        return convert_dict_to_json(field_data, type_args[1])
     elif is_json_schema_list(field_type):
-        return [
-            get_field_from_json(type_args[0], v) for v in field_data
-        ]
+        return convert_list_to_json(field_data, type_args[0])
     elif is_json_schema(field_type):
         return get_field_from_json(field_type, field_data)
     elif is_url_field(field_type):
@@ -214,10 +217,26 @@ def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
     else:
         return field_data
 
+def get_obj_from_related_field(data: dict[str, Any], field_name: str, field_type: type):
+    """
+    Extracts nested dataclass from dictionary using Django double underscore notation 
+    """
+    prefix = f"{field_name}__"
+    sub_data = {
+        k.replace(prefix, ''): v
+        for k, v in data.items()
+        if k.startswith(prefix)
+    }
+    if 'id' in sub_data and sub_data['id'] is None:
+        sub_obj = None
+    else:
+        sub_obj = get_obj_from_values(field_type, sub_data)
+    return sub_obj
+
 
 def get_obj_from_values(type_class: type, data: dict[str, Any], related_field: FieldName | None = None):
     """
-    Function is used to convert django queryset values method result to dataclass object
+    Converts django queryset values method result to dataclass object
     It recursively processes all nested dataclasses, unfolding their fields by double underscore
     """
     kw: dict[str, Any] = {}
@@ -227,17 +246,7 @@ def get_obj_from_values(type_class: type, data: dict[str, Any], related_field: F
         field_data = data.get(field_name)
         if is_model_schema(field_type):
             # Nested dataclass
-            prefix = f"{field_name}__"
-            sub_data = {
-                k.replace(prefix, ''): v
-                for k, v in data.items()
-                if k.startswith(prefix)
-            }
-            if 'id' in sub_data and sub_data['id'] is None:
-                sub_obj = None
-            else:
-                sub_obj = get_obj_from_values(field_type, sub_data)
-            kw[field.name] = sub_obj
+            kw[field.name] = get_obj_from_related_field(data, field_name, field_type)
         else:
             result = convert_field_to_json(field_data, field_type)
             if result is not None:
@@ -246,6 +255,9 @@ def get_obj_from_values(type_class: type, data: dict[str, Any], related_field: F
 
 
 def get_field_names(type_class: Type[DataclassProtocol], related_field: FieldName | None = None) -> list[str]:
+    """
+    Constructs list of fields for Django ORM based on nested dataclasses
+    """
     result: list[str] = []
     for field in fields(type_class):
         field_name = field.name if related_field is None else f"{related_field}__{field.name}"
@@ -267,14 +279,6 @@ def reverse_map(
     return {reverse_mapping.get(k, k): v for k, v in data.items()}
 
 
-Result = TypeVar("Result", bound=DataclassProtocol)
-
-
-def data_from_model(data_type: Type[Result], obj: models.Model) -> Result:
-    kw: dict[str, Any] = {}
-    for field in fields(data_type):  # type: ignore
-        kw[field.name] = getattr(obj, field.name)
-    return data_type(**kw)
 
 
 async def get_typed_data(
@@ -294,12 +298,12 @@ async def get_typed_data(
 
 async def typed_data_dict(
     qset: models.QuerySet[Any],
-    type_class: Type[Result],
+    type_class: Type[ResultType],
     key_field: FieldName,
     related_field: FieldName | None = None,
-) -> FlatDict[Result]:
+) -> FlatDict[ResultType]:
     typed_data = await get_typed_data(type_class, qset, (key_field,), related_field)
-    result: dict[ResultKey, Result] = {}
+    result: dict[ResultKey, ResultType] = {}
     async for row in typed_data:
         obj = get_obj_from_values(type_class, row, related_field=related_field)
         key = row[key_field if related_field is None else f"{related_field}__{key_field}"]
@@ -309,15 +313,15 @@ async def typed_data_dict(
 
 async def nested_typed_data_dict(
     qset: models.QuerySet[Any],
-    type_class: Type[Result],
+    type_class: Type[ResultType],
     key_fields: tuple[FieldName, FieldName],
-) -> NestedDict[Result]:
+) -> NestedDict[ResultType]:
     """
     In case of composite key, key_field is tuple of field names
     In this case result is two level nested dictionary
     """
     typed_data = await get_typed_data(type_class, qset, key_fields)
-    result = defaultdict[ResultKey, dict[ResultKey, Result]](dict)
+    result = defaultdict[ResultKey, dict[ResultKey, ResultType]](dict)
     async for row in typed_data:
         obj = get_obj_from_values(type_class, row)
         key = row[key_fields[0]]
@@ -332,10 +336,10 @@ def or_pipe(first: Q, second: Q) -> Q:
 
 async def retrieve_typed_dict(
     qset: models.QuerySet[Any],
-    result_class: Type[Result],
+    result_class: Type[ResultType],
     key_fields: tuple[FieldName, FieldName],
     objs: list[Any],
-) -> NestedDict[Result]:
+) -> NestedDict[ResultType]:
     """
     This is used to filter qset by composite key. Composity key components passed in key_field parameter
     objs list is used to filter qset by key_field.
@@ -360,20 +364,11 @@ async def retrieve_typed_dict(
 
 async def typed_data_list(
     qset: models.QuerySet[Any],
-    type_class: Type[Result],
+    type_class: Type[ResultType],
     field_mapping: dict[str, str] = {},
-) -> list[Result]:
+) -> list[ResultType]:
     result = await get_typed_data(type_class, qset, field_mapping=field_mapping)
     reverse_mapping = {v: k for k, v in field_mapping.items()}
     mapped_result = [reverse_map(row, reverse_mapping) async for row in result]
     return [get_obj_from_values(type_class, row) for row in mapped_result]
 
-
-def flatten_nested_dict(
-    nested_dict: NestedDict[Result]
-) -> list[Result]:
-    result: list[Result] = []
-    for first_level_dict in nested_dict.values():
-        for obj in first_level_dict.values():
-            result.append(obj)
-    return result
