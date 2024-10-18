@@ -45,7 +45,7 @@ def api_list(
     router: Router,
     url: str,
     pagination: Type[PaginationBase],
-    response_type: type,
+    response_type: Type[SingleItemResponse],
     auth: Any = django_auth,
     date_field: str | None = None,
     transform: TransformListFunc | None = None,
@@ -68,7 +68,7 @@ def api_list(
 def id_paginated(
     router: Router,
     url: str,
-    response_type: type,
+    response_type: Type[SingleItemResponse],
     auth: Any = django_auth,
     transform: TransformListFunc | None = None,
 ) -> Decorator:
@@ -85,7 +85,7 @@ def id_paginated(
 def date_paginated(
     router: Router,
     url: str,
-    response_type: type,
+    response_type: Type[SingleItemResponse],
     auth: Any = django_auth,
     date_field: str = 'created_at',
     transform: TransformListFunc | None = None,

@@ -46,10 +46,12 @@ class IDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
         last_id: int | None
 
     def get_result(self, result: Sequence[ResultType]) -> dict[str, Any]:
-        return {
+        result_data: dict[str, Any] = {
             'items': result,
             'last_id': result[-1].id if result else None,
+            'count': len(result),
         }
+        return result_data
 
     async def apaginate_queryset(
         self, queryset: models.QuerySet[Any], pagination: Input, **params: Any
