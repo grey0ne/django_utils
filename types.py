@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from django.db import models
-from typing import TypeVar, Protocol, ClassVar, Any, Callable, Sequence
+from typing import TypeVar, Protocol, ClassVar, Any, Callable, Sequence, Annotated
 
 TransformListFunc = Callable[[models.QuerySet[Any]], Sequence[Any]]
 TransformSingleFunc = Callable[[models.QuerySet[Any]], Any]
@@ -35,6 +35,7 @@ NestedOrFlatDict = NestedDict[T] | FlatDict[T]
 ResultType = TypeVar("ResultType", bound=DataclassProtocol)
 
 URLAnnotation = 'URLAnnotation'
+URLSchema = Annotated[str, URLAnnotation]
 
 @dataclass(kw_only=True, slots=True, frozen=True)
 class Error:
