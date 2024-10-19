@@ -222,7 +222,7 @@ def get_obj_from_related_field(data: dict[str, Any], field_name: str, field_type
     """
     prefix = f"{field_name}__"
     sub_data = {
-        k.replace(prefix, ''): v
+        k.replace(prefix, '', 1): v
         for k, v in data.items()
         if k.startswith(prefix)
     }
