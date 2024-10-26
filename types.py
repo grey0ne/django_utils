@@ -46,3 +46,7 @@ Decorator = Callable[[Callable[..., Any]], Callable[..., Any]]
 @dataclass(kw_only=True, slots=True, frozen=True)
 class AuthData:
     user_id: IdType
+
+
+Base64FileAnnotation = 'Base64FILE'
+Base64File = Annotated[str, Base64FileAnnotation]

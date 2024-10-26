@@ -1,7 +1,8 @@
 from collections import defaultdict
 from dataclasses import fields, is_dataclass
 from functools import reduce
-from typing import Any, Sequence, Type, TypeVar, get_args, get_origin
+from typing import Any, Sequence, Type, TypeVar, get_args, Callable
+from ninja import Body
 
 from django.core.files.storage import default_storage
 from django.db import models
@@ -9,32 +10,14 @@ from django.db.models import Q
 
 from dataorm.types import (
     NestedDict, JsonSchema, FlatDict, ResultKey,
-    DataclassProtocol, URLAnnotation, ResultType, FieldName
+    DataclassProtocol, ResultType, FieldName
+)
+from dataorm.helpers import base64_to_file
+from dataorm.fields import (
+    is_json_schema_dict, is_json_schema_list, remove_optional_from_type,
+    is_json_schema, is_url_field, is_file_field
 )
 
-
-def is_json_schema_dict(field_type: Any) -> bool:
-    type_args = get_args(field_type)
-    return get_origin(field_type) == dict and issubclass(type_args[1], JsonSchema)
-
-def is_json_schema_list(field_type: Any) -> bool:
-    type_args = get_args(field_type)
-    return get_origin(field_type) == list and issubclass(type_args[0], JsonSchema)
-
-def remove_optional_from_type(field_type: Any) -> Any:
-    args = get_args(field_type)
-    if len(args) == 2 and args[1] == type(None):
-        return args[0]
-    return field_type
-
-def is_json_schema(field_type: Any) -> bool:
-    type_args = get_args(field_type)
-    return len(type_args) == 0 and issubclass(field_type, JsonSchema)
-
-def is_url_field(field_type: Any) -> bool:
-    if hasattr(field_type, '__metadata__'):
-        return field_type.__metadata__[0] == URLAnnotation
-    return False
 
 
 def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
@@ -370,4 +353,19 @@ async def typed_data_list(
     reverse_mapping = {v: k for k, v in field_mapping.items()}
     mapped_result = [reverse_map(row, reverse_mapping) async for row in result]
     return [get_obj_from_values(type_class, row) for row in mapped_result]
+
+
+def get_model_data_from_request(request_data: Body[DataclassProtocol], file_name_handler: Callable[[str, Any], str]):
+    """
+        file_name_handler: gets field name, field data and returns a file name
+    """
+    model_data: dict[str, Any] = {}
+    for field in fields(request_data):
+        field_type = remove_optional_from_type(field.type)
+        field_data = getattr(request_data, field.name)
+        if is_file_field(field_type):
+            model_data[field.name] = base64_to_file(field_data, name=file_name_handler(field.name, field_data))
+        else:
+            model_data[field.name] = field_data
+    return model_data
 
