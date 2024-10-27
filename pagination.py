@@ -104,6 +104,7 @@ class DateIDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType
         last_elem = result[-1] if len(result) > 0 else None
         return {
             'items': result,
+            'count': len(result),
             'last_id': last_elem.id if last_elem else None,
             'last_timestamp': self.get_timestamp(last_elem) if last_elem else None,
         }
