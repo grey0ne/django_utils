@@ -18,7 +18,7 @@ async def get_single_item_or_404(
     qset: models.QuerySet[Any],
     response_type: Type[SingleItemResponse],
     transform: TransformSingleFunc | None = None,
-) -> Any:
+) -> SingleItemResponse | tuple[int, dict[str, str]]:
     if transform is not None:
         return transform(qset)
     result = await typed_data_list(qset, response_type)
