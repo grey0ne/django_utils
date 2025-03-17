@@ -22,7 +22,7 @@ class EfficientPagination[ResultType: DataclassProtocol](PaginationBase):
         super().__init__(**kwargs)
 
     def paginate_queryset(self, queryset: models.QuerySet[Any], pagination: Any, **params: Any) -> Any:
-        raise NotImplemented('No sync pagination in this project')
+        raise NotImplementedError('No sync pagination in this project')
 
     async def transform_queryset(
         self, queryset: models.QuerySet[Any]
