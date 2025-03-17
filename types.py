@@ -41,6 +41,10 @@ URLSchema = Annotated[str, URLAnnotation]
 class Error:
     detail: str
 
+@dataclass(kw_only=True, slots=True, frozen=True)
+class EmptyResponse:
+    detail: str = ''
+
 Decorator = Callable[[Callable[..., Any]], Callable[..., Any]]
 
 @dataclass(kw_only=True, slots=True, frozen=True)
