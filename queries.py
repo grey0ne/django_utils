@@ -195,7 +195,10 @@ def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
     elif is_json_schema(field_type):
         return get_field_from_json(field_type, field_data)
     elif is_url_field(field_type):
-        return default_storage.url(field_data)
+        if (field_data):
+            return default_storage.url(field_data)
+        else:
+            return ''
     else:
         return field_data
 
