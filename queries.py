@@ -43,6 +43,19 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
             kw[field.name] = field_data
     return kw
 
+def dataclass_from_model_instance(instance: models.Model, type_class: Type[ResultType]) -> ResultType:
+    kw: dict[str, Any] = {}
+    for field in fields(type_class):
+        field_type = remove_optional_from_type(field.type)
+        field_data = getattr(instance, field.name)
+        if is_model_schema(field_type):
+            kw[field.name] = dataclass_from_model_instance(field_data, field_type)
+        elif is_url_field(field_type):
+            kw[field.name] = default_storage.url(field_data.name)
+        else:
+            kw[field.name] = field_data
+    return type_class(**kw)
+
 
 def is_model_schema(field_type: type):
     return is_dataclass(field_type) and not issubclass(field_type, JsonSchema)
