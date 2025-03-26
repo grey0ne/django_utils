@@ -32,7 +32,7 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
         field_type = remove_optional_from_type(field.type)
         field_data = getattr(obj, field.name)
         if field_data is None:
-            continue
+            kw[field.name] = None
         elif is_json_schema_dict(field_type):
             kw[field.name] = {k: dict_from_dataclass(v) for k, v in field_data.items()}
         elif is_json_schema_list(field_type):
@@ -48,6 +48,8 @@ def dataclass_from_model_instance(instance: models.Model, type_class: Type[Resul
     for field in fields(type_class):
         field_type = remove_optional_from_type(field.type)
         field_data = getattr(instance, field.name)
+        if field_data is None:
+            continue
         if is_model_schema(field_type):
             kw[field.name] = dataclass_from_model_instance(field_data, field_type)
         elif is_url_field(field_type):
