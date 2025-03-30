@@ -1,8 +1,13 @@
 from typing import Any, get_args, get_origin
+from django.db import models
 from dataorm.types import (
     JsonSchema, URLAnnotation, Base64FileAnnotation
 )
 
+def LocalizedStringField(verbose_name: str):
+    return models.JSONField[dict[str, str]](
+        null=True, blank=True, verbose_name=verbose_name
+    )
 
 def is_json_schema_dict(field_type: Any) -> bool:
     type_args = get_args(field_type)
