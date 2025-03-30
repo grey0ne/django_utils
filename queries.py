@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import fields, is_dataclass
+from dataclasses import fields, is_dataclass, _MISSING_TYPE # type: ignore
 from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
@@ -32,7 +32,7 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
         field_type = remove_optional_from_type(field.type)
         field_data = getattr(obj, field.name)
         if field_data is None:
-            continue
+            kw[field.name] = None
         elif is_json_schema_dict(field_type):
             kw[field.name] = {k: dict_from_dataclass(v) for k, v in field_data.items()}
         elif is_json_schema_list(field_type):
@@ -42,6 +42,33 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
         else:
             kw[field.name] = field_data
     return kw
+
+
+def has_default_value(field: Any) -> bool:
+    return not isinstance(field.default, _MISSING_TYPE) or not isinstance(field.default_factory, _MISSING_TYPE)
+
+
+def dataclass_from_model_instance(instance: models.Model, type_class: Type[ResultType]) -> ResultType:
+    kw: dict[str, Any] = {}
+    for field in fields(type_class):
+        field_type = remove_optional_from_type(field.type)
+        try:
+            field_data = getattr(instance, field.name)
+        except AttributeError:
+            # If the field is not found in the model instance, we check if it has a default value
+            # This allows us to skip fields that are not present in the model instance to populate them later
+            if has_default_value(field):
+                continue
+            raise AttributeError(f'Field {field.name} not found in model {instance.__class__.__name__}')
+        if field_data is None:
+            continue
+        if is_model_schema(field_type):
+            kw[field.name] = dataclass_from_model_instance(field_data, field_type)
+        elif is_url_field(field_type):
+            kw[field.name] = default_storage.url(field_data.name)
+        else:
+            kw[field.name] = field_data
+    return type_class(**kw)
 
 
 def is_model_schema(field_type: type):
@@ -195,7 +222,10 @@ def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
     elif is_json_schema(field_type):
         return get_field_from_json(field_type, field_data)
     elif is_url_field(field_type):
-        return default_storage.url(field_data)
+        if (field_data):
+            return default_storage.url(field_data)
+        else:
+            return ''
     else:
         return field_data
 

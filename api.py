@@ -6,7 +6,7 @@ from dataorm.auth import django_auth
 from dataorm.queries import typed_data_list
 from dataorm.pagination import PaginationBase, IDPagination, DateIDPagination
 from dataorm.types import (
-    Error, TransformSingleFunc, Decorator, SingleItemResponse, TransformListFunc, 
+    Error, TransformSingleFunc, Decorator, SingleItemResponse, TransformListFunc, DataclassProtocol
 )
 
 
@@ -26,6 +26,18 @@ async def get_single_item_or_404(
         return 404, {'detail': 'Not found'}
     return result[0]
 
+def action(
+    router: Router,
+    url: str,
+    response_type: Type[DataclassProtocol],
+    auth: Any = django_auth,
+ ) -> Decorator:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        router_decorator: Decorator = router.post(
+            url, response=get_response(response_type), auth=auth
+        )
+        return router_decorator(func)
+    return decorator
 
 def single_item(
     router: Router,

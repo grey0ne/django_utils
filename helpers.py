@@ -7,3 +7,4 @@ def base64_to_file(data: str, name: str) -> ContentFile:
     ext = format.split('/')[-1] 
 
     return ContentFile(base64.b64decode(imgstr), name=name + '.' + ext)
+
