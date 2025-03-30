@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import fields, is_dataclass
+from dataclasses import fields, is_dataclass, _MISSING_TYPE # type: ignore
 from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
@@ -43,11 +43,23 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
             kw[field.name] = field_data
     return kw
 
+
+def has_default_value(field: Any) -> bool:
+    return not isinstance(field.default, _MISSING_TYPE) or not isinstance(field.default_factory, _MISSING_TYPE)
+
+
 def dataclass_from_model_instance(instance: models.Model, type_class: Type[ResultType]) -> ResultType:
     kw: dict[str, Any] = {}
     for field in fields(type_class):
         field_type = remove_optional_from_type(field.type)
-        field_data = getattr(instance, field.name)
+        try:
+            field_data = getattr(instance, field.name)
+        except AttributeError:
+            # If the field is not found in the model instance, we check if it has a default value
+            # This allows us to skip fields that are not present in the model instance to populate them later
+            if has_default_value(field):
+                continue
+            raise AttributeError(f'Field {field.name} not found in model {instance.__class__.__name__}')
         if field_data is None:
             continue
         if is_model_schema(field_type):
