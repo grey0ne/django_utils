@@ -15,7 +15,7 @@ from dataorm.types import (
 from dataorm.helpers import base64_to_file
 from dataorm.fields import (
     is_json_schema_dict, is_json_schema_list, remove_optional_from_type,
-    is_json_schema, is_url_field, is_file_field
+    is_json_schema, is_url_field, is_file_field, is_external_field
 )
 
 
@@ -45,6 +45,10 @@ def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
 
 
 def has_default_value(field: Any) -> bool:
+    """
+        Checks if dataclass field has default value or default factory
+        This is used to skip fields that are not present in the model instance
+    """
     return not isinstance(field.default, _MISSING_TYPE) or not isinstance(field.default_factory, _MISSING_TYPE)
 
 
@@ -52,14 +56,10 @@ def dataclass_from_model_instance(instance: models.Model, type_class: Type[Resul
     kw: dict[str, Any] = {}
     for field in fields(type_class):
         field_type = remove_optional_from_type(field.type)
-        try:
-            field_data = getattr(instance, field.name)
-        except AttributeError:
-            # If the field is not found in the model instance, we check if it has a default value
-            # This allows us to skip fields that are not present in the model instance to populate them later
-            if has_default_value(field):
-                continue
-            raise AttributeError(f'Field {field.name} not found in model {instance.__class__.__name__}')
+        if is_external_field(field_type):
+            # Skip external fields. This is not very clean solution, but I have to get around corner case somehow
+            continue
+        field_data = getattr(instance, field.name)
         if field_data is None:
             continue
         if is_model_schema(field_type):
@@ -72,6 +72,9 @@ def dataclass_from_model_instance(instance: models.Model, type_class: Type[Resul
 
 
 def is_model_schema(field_type: type):
+    """
+        Checks if field is model schema for recursive dataclass
+    """
     return is_dataclass(field_type) and not issubclass(field_type, JsonSchema)
 
 
@@ -274,6 +277,9 @@ def get_field_names(type_class: Type[DataclassProtocol], related_field: FieldNam
     for field in fields(type_class):
         field_name = field.name if related_field is None else f"{related_field}__{field.name}"
         field_type = remove_optional_from_type(field.type)
+        if is_external_field(field_type):
+            # Skip external fields. This is not very clean solution, but I have to get around corner case somehow
+            continue
         if is_model_schema(field_type):
             sub_names = get_field_names(field_type)
             for sub_name in sub_names:

@@ -37,6 +37,8 @@ ResultType = TypeVar("ResultType", bound=DataclassProtocol)
 URLAnnotation = 'URLAnnotation'
 URLSchema = Annotated[str, URLAnnotation]
 
+ExternalAnnotation = 'ExternalField'
+
 @dataclass(kw_only=True, slots=True, frozen=True)
 class Error:
     detail: str

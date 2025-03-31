@@ -1,7 +1,7 @@
 from typing import Any, get_args, get_origin
 from django.db import models
 from dataorm.types import (
-    JsonSchema, URLAnnotation, Base64FileAnnotation
+    JsonSchema, URLAnnotation, Base64FileAnnotation, ExternalAnnotation
 )
 
 def LocalizedStringField(verbose_name: str):
@@ -30,6 +30,14 @@ def is_json_schema(field_type: Any) -> bool:
 def is_url_field(field_type: Any) -> bool:
     if hasattr(field_type, '__metadata__'):
         return field_type.__metadata__[0] == URLAnnotation
+    return False
+
+def is_external_field(field_type: Any) -> bool:
+    """
+        This used for fields that are not in the model and calculated separately
+    """
+    if hasattr(field_type, '__metadata__'):
+        return field_type.__metadata__[0] == ExternalAnnotation
     return False
 
 def is_file_field(field_type: Any) -> bool:
