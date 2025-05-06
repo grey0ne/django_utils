@@ -61,6 +61,7 @@ def api_list(
     auth: Any = django_auth,
     date_field: str | None = None,
     transform: TransformListFunc | None = None,
+    reverse_order: bool = False,
 ) -> Decorator:
     def decorator(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
         router_decorator: Decorator = router.get(
@@ -70,6 +71,7 @@ def api_list(
             pagination,
             response_type=response_type,
             date_field=date_field,
+            reverse_order=reverse_order,
             transform=transform,
         )
         return router_decorator(pagination_decorator(func))
@@ -101,6 +103,7 @@ def date_paginated(
     auth: Any = django_auth,
     date_field: str = 'created_at',
     transform: TransformListFunc | None = None,
+    reverse_order: bool = False,
 ) -> Decorator:
     return api_list(
         router=router,
@@ -108,6 +111,7 @@ def date_paginated(
         pagination=DateIDPagination,
         response_type=response_type,
         date_field=date_field,
+        reverse_order=reverse_order,
         auth=auth,
         transform=transform,
     )

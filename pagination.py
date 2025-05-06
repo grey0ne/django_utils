@@ -65,8 +65,9 @@ class IDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
 
 class DateIDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
 
-    def __init__(self, *, date_field: str, **kwargs: Any) -> None:
+    def __init__(self, *, date_field: str, reverse_order: bool=False, **kwargs: Any) -> None:
         self.date_field = date_field
+        self.reverse_order = reverse_order
         super().__init__(**kwargs)
 
     class Input(PaginationBase.Input):
@@ -90,14 +91,24 @@ class DateIDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType
         if pagination.to_timestamp is not None:
             ms = pagination.to_timestamp # timestamp in microseconds
             to_date = datetime.fromtimestamp(ms//1000000).replace(microsecond=ms%1000000) # to avoid floating point conversion
-            date_lt_filter = Q(**{f'{self.date_field}__lt': to_date})
-            id_lt_filter = Q(
-                id__lt=pagination.to_id,
-                **{f'{self.date_field}': to_date},
-            )
-            qset = qset.filter(date_lt_filter | id_lt_filter)
+            if self.reverse_order:
+                date_filter = Q(**{f'{self.date_field}__gt': to_date})
+                id_filter = Q(
+                    id__gt=pagination.to_id,
+                    **{f'{self.date_field}': to_date},
+                )
+            else:
+                date_filter = Q(**{f'{self.date_field}__lt': to_date})
+                id_filter = Q(
+                    id__lt=pagination.to_id,
+                    **{f'{self.date_field}': to_date},
+                )
+            qset = qset.filter(date_filter | id_filter)
 
-        qset = qset.order_by(f'-{self.date_field}', '-id')[:pagination.per_page]
+        if self.reverse_order:
+            qset = qset.order_by(f'{self.date_field}', 'id')[:pagination.per_page]
+        else:
+            qset = qset.order_by(f'-{self.date_field}', '-id')[:pagination.per_page]
         return qset
 
     def get_result(self, result: Sequence[ResultType]) -> dict[str, Any]:
