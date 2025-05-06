@@ -3,6 +3,7 @@ from dataclasses import fields, is_dataclass, _MISSING_TYPE # type: ignore
 from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
+from enum import Enum
 
 from django.core.files.storage import default_storage
 from django.db import models
@@ -224,6 +225,8 @@ def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
         return convert_list_to_json(field_data, type_args[0])
     elif is_json_schema(field_type):
         return get_field_from_json(field_type, field_data)
+    elif issubclass(field_type, Enum):
+        return field_type(field_data)
     elif is_url_field(field_type):
         if (field_data):
             return default_storage.url(field_data)
@@ -295,8 +298,6 @@ def reverse_map(
     data: dict[str, Any], reverse_mapping: dict[str, str]
 ) -> dict[str, Any]:
     return {reverse_mapping.get(k, k): v for k, v in data.items()}
-
-
 
 
 async def get_typed_data(
