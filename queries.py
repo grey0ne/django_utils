@@ -4,6 +4,7 @@ from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
 from enum import Enum
+from inspect import isclass
 
 from django.core.files.storage import default_storage
 from django.db import models
@@ -225,7 +226,7 @@ def convert_field_to_json(field_data: Any, field_type: Any) -> Any:
         return convert_list_to_json(field_data, type_args[0])
     elif is_json_schema(field_type):
         return get_field_from_json(field_type, field_data)
-    elif issubclass(field_type, Enum):
+    elif isclass(field_type) and issubclass(field_type, Enum):
         return field_type(field_data)
     elif is_url_field(field_type):
         if (field_data):
