@@ -1,12 +1,17 @@
 from ninja.security.apikey import APIKeyCookie
 from django.http import HttpRequest
 from django.conf import settings
+from django.contrib.auth import SESSION_KEY
 from dataorm.types import AuthData
 from users.models import User
 from typing import Any
 
 async def async_get_user(request: HttpRequest) -> User:
-    return await request.auser() #type: ignore auser is async property added in latest django versions
+    user_pk = User._meta.pk
+    if user_pk is None:
+        raise ValueError("User model does not have a primary key defined.")
+    user_id = user_pk.to_python(request.session[SESSION_KEY])
+    return await User.objects.aget(pk=user_id)
 
 class AsyncSessionAuth(APIKeyCookie):
 
