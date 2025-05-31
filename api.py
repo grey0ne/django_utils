@@ -5,7 +5,7 @@ from ninja.pagination import paginate # type: ignore paginate does not support t
 from dataorm.auth import django_auth
 from dataorm.queries import typed_data_list
 from dataorm.pagination import PaginationBase, IDPagination, DateIDPagination
-from dataorm.types import (
+from dataorm.schema import (
     Error, TransformSingleFunc, Decorator, SingleItemResponse, TransformListFunc, DataclassProtocol
 )
 
@@ -67,7 +67,7 @@ def api_list(
         router_decorator: Decorator = router.get(
             url, response=get_response(list[response_type]), auth=auth
         )
-        pagination_decorator: Any = paginate(
+        pagination_decorator: Any = paginate( # type: ignore paginate does not support typing properly
             pagination,
             response_type=response_type,
             date_field=date_field,

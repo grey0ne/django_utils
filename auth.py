@@ -2,7 +2,7 @@ from ninja.security.apikey import APIKeyCookie
 from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
-from dataorm.types import AuthData
+from dataorm.schema import AuthData
 from users.models import User
 from typing import Any
 

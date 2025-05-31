@@ -1,5 +1,6 @@
 from collections import defaultdict
-from dataclasses import fields, is_dataclass, _MISSING_TYPE # type: ignore
+from dataclasses import fields, is_dataclass
+from dataclasses import _MISSING_TYPE # type: ignore
 from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
@@ -10,16 +11,19 @@ from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import Q
 
-from dataorm.types import (
+from dataorm.schema import (
     NestedDict, JsonSchema, FlatDict, ResultKey,
     DataclassProtocol, ResultType, FieldName
 )
 from dataorm.helpers import base64_to_file
-from dataorm.fields import (
+from dataorm.queries_helpers import (
     is_json_schema_dict, is_json_schema_list, remove_optional_from_type,
     is_json_schema, is_url_field, is_file_field, is_external_field
 )
 
+
+ModelType = TypeVar('ModelType', bound=models.Model)
+ResultType = TypeVar('ResultType', bound=DataclassProtocol)
 
 
 def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
@@ -80,18 +84,15 @@ def is_model_schema(field_type: type):
     return is_dataclass(field_type) and not issubclass(field_type, JsonSchema)
 
 
-T = TypeVar('T', bound=models.Model)
-
-
 async def bulk_create_wrapper(
-    model: Type[T],
-    objs_to_create: Sequence[T],
+    model: Type[ModelType],
+    objs_to_create: Sequence[ModelType],
     unique_fields: list[str] = [],
     ignore_conflicts: bool = False,
     update_conflicts: bool = False,
     update_fields: list[str] = [],
     batch_size: int = 100,
-) -> list[T]:
+) -> list[ModelType]:
     # Wrapper is necessary for compatibility with different DB backends
     return await model.objects.abulk_create(
         objs_to_create,
@@ -103,18 +104,14 @@ async def bulk_create_wrapper(
     )
 
 
-M = TypeVar('M', bound=models.Model)
-R = TypeVar('R', bound=DataclassProtocol)
-
-
 async def bulk_create_to_nested_dict(
-    model: Type[M],
-    objs_to_create: Sequence[M],
-    result_type: Type[R],
+    model: Type[ModelType],
+    objs_to_create: Sequence[ModelType],
+    result_type: Type[ResultType],
     key_fields: tuple[str, str],
     unique_fields: list[str] = [],
     update_fields: list[str] = [],
-) -> NestedDict[R]:
+) -> NestedDict[ResultType]:
     """
     Shortcut for bulk creating objects and converting result to nested dictionary of dataclasses
     Key fields are used to create key on corresponding levels of nested dict
@@ -128,7 +125,7 @@ async def bulk_create_to_nested_dict(
         unique_fields=unique_fields,
         update_fields=update_fields,
     )
-    result: NestedDict[R] = defaultdict[ResultKey, dict[ResultKey, R]](dict)
+    result: NestedDict[ResultType] = defaultdict[ResultKey, dict[ResultKey, ResultType]](dict)
     for obj in result_models:
         key = getattr(obj, key_fields[0])
         sub_key = getattr(obj, key_fields[1])
@@ -139,13 +136,13 @@ async def bulk_create_to_nested_dict(
 
 
 async def bulk_create_to_flat_dict(
-    model: Type[M],
-    objs_to_create: Sequence[M],
-    result_type: Type[R],
+    model: Type[ModelType],
+    objs_to_create: Sequence[ModelType],
+    result_type: Type[ResultType],
     key_field: str,
     unique_fields: list[str] = [],
     update_fields: list[str] = [],
-) -> FlatDict[R]:
+) -> FlatDict[ResultType]:
     """
     Shortcut for bulk creating objects and converting result to flat dictionary of dataclasses
     """
@@ -158,7 +155,7 @@ async def bulk_create_to_flat_dict(
         unique_fields=unique_fields,
         update_fields=update_fields,
     )
-    result: FlatDict[R] = {}
+    result: FlatDict[ResultType] = {}
     for obj in result_models:
         key = getattr(obj, key_field)
         kw = {field.name: getattr(obj, field.name) for field in fields(result_type)}
@@ -167,12 +164,12 @@ async def bulk_create_to_flat_dict(
 
 
 async def bulk_create_to_list(
-    model: Type[M],
-    objs_to_create: Sequence[M],
-    result_type: Type[R],
+    model: Type[ModelType],
+    objs_to_create: Sequence[ModelType],
+    result_type: Type[ResultType],
     unique_fields: list[str] = [],
     update_fields: list[str] = [],
-) -> list[R]:
+) -> list[ResultType]:
     ignore_conflicts = len(update_fields) == 0
     result_models = await bulk_create_wrapper(
         model=model,
@@ -182,7 +179,7 @@ async def bulk_create_to_list(
         unique_fields=unique_fields,
         update_fields=update_fields,
     )
-    result: list[R] = []
+    result: list[ResultType] = []
     for obj in result_models:
         kw = {field.name: getattr(obj, field.name) for field in fields(result_type)}
         result.append(get_obj_from_values(result_type, kw))

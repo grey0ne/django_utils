@@ -1,6 +1,6 @@
 from ninja.pagination import PaginationBase
 from typing import Any, Type, Sequence
-from dataorm.types import DataclassProtocol, TransformListFunc, ModelProtocol
+from dataorm.schema import DataclassProtocol, TransformListFunc, ModelProtocol
 from dataorm.queries import typed_data_list
 from datetime import datetime
 from django.db import models
@@ -22,7 +22,7 @@ class EfficientPagination[ResultType: DataclassProtocol](PaginationBase):
         super().__init__(**kwargs)
 
     def paginate_queryset(self, queryset: models.QuerySet[Any], pagination: Any, **params: Any) -> Any:
-        raise NotImplementedError('No sync pagination in this project')
+        raise NotImplementedError('Syncronous pagination is not supported in this project. apaginate_queryset should be implemented.')
 
     async def transform_queryset(
         self, queryset: models.QuerySet[Any]
