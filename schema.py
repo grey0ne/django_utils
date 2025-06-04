@@ -61,4 +61,5 @@ Base64File = Annotated[str, Base64FileAnnotation]
 LocalizedStringSchema = TypedDict('LocalizedStringSchema', {
     'ru': str,
     'en': str,
+    'es': str,
 }, total=False)
