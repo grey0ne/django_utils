@@ -53,6 +53,22 @@ def single_item(
 
     return decorator
 
+
+def unpaginated_list(
+    router: Router,
+    url: str,
+    response_type: Type[SingleItemResponse],
+    auth: Any = django_auth,
+    transform: TransformListFunc | None = None,
+) -> Decorator:
+    def decorator(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
+        router_decorator: Decorator = router.get(
+            url, response=get_response(list[response_type]), auth=auth
+        )
+        return router_decorator(func)
+    return decorator
+
+
 def api_list(
     router: Router,
     url: str,
