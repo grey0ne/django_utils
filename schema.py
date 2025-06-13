@@ -57,9 +57,16 @@ class AuthData:
 Base64FileAnnotation = 'Base64FILE'
 Base64File = Annotated[str, Base64FileAnnotation]
 
+@dataclass(kw_only=True, slots=True, frozen=True)
+class FileUploadData:
+    uploaded_file: Base64File
+    file_name: str
+
 
 LocalizedStringSchema = TypedDict('LocalizedStringSchema', {
     'ru': str,
+    'de': str,
     'en': str,
     'es': str,
+    'pt': str
 }, total=False)
