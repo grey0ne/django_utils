@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from django.db import models
-from typing import TypeVar, Protocol, ClassVar, Any, Callable, Sequence, Annotated, TypedDict
+from typing import TypeVar, Protocol, ClassVar, Any, Callable, Sequence, Annotated, TypedDict, Coroutine
 
-TransformListFunc = Callable[[models.QuerySet[Any]], Sequence[Any]]
-TransformSingleFunc = Callable[[models.QuerySet[Any]], Any]
+TransformListFunc = Callable[[models.QuerySet[Any]], Coroutine[Any, Any, Sequence[Any]]]
+TransformSingleFunc = Callable[[models.QuerySet[Any]], Coroutine[Any, Any, Any]]
 
 IdType = int
 FieldName = str

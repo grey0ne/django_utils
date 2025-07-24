@@ -28,7 +28,7 @@ class EfficientPagination[ResultType: DataclassProtocol](PaginationBase):
         self, queryset: models.QuerySet[Any]
     ):
         if self.transform is not None:
-            return self.transform(queryset)
+            return await self.transform(queryset)
         return await typed_data_list(queryset, self.response_type)
 
 
@@ -59,7 +59,7 @@ class IDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
         if pagination.to_id is not None:
             queryset = queryset.filter(id__lt=pagination.to_id)
         result_qset = queryset.order_by('-id')[: pagination.per_page]
-        result = await typed_data_list(result_qset, self.response_type)
+        result = await self.transform_queryset(result_qset)
         return self.get_result(result)
 
 

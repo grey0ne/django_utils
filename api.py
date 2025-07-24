@@ -21,7 +21,7 @@ async def get_single_item_or_404(
     transform: TransformSingleFunc | None = None,
 ) -> SingleItemResponse:
     if transform is not None:
-        qset = transform(qset)
+        qset = await transform(qset)
     result = await typed_data_list(qset, response_type)
     if len(result) == 0:
         raise HttpError(404, 'Not found')
