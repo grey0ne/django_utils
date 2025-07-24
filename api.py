@@ -2,6 +2,7 @@ from typing import Any, Callable, Type
 from django.db import models
 from ninja import Router
 from ninja.pagination import paginate # type: ignore paginate does not support typing
+from ninja.errors import HttpError
 from dataorm.auth import django_auth
 from dataorm.queries import typed_data_list
 from dataorm.pagination import PaginationBase, IDPagination, DateIDPagination
@@ -18,13 +19,16 @@ async def get_single_item_or_404(
     qset: models.QuerySet[Any],
     response_type: Type[SingleItemResponse],
     transform: TransformSingleFunc | None = None,
-) -> SingleItemResponse | tuple[int, dict[str, str]]:
+) -> SingleItemResponse:
     if transform is not None:
-        return transform(qset)
+        qset = transform(qset)
     result = await typed_data_list(qset, response_type)
     if len(result) == 0:
-        return 404, {'detail': 'Not found'}
+        raise HttpError(404, 'Not found')
+    if len(result) > 1:
+        raise HttpError(400, 'More than one item found')
     return result[0]
+
 
 def action(
     router: Router,
@@ -32,12 +36,13 @@ def action(
     response_type: Type[DataclassProtocol],
     auth: Any = django_auth,
  ) -> Decorator:
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
         router_decorator: Decorator = router.post(
             url, response=get_response(response_type), auth=auth
         )
         return router_decorator(func)
-    return decorator
+    return wrapper
+
 
 def single_item(
     router: Router,
@@ -45,13 +50,13 @@ def single_item(
     response_type: Type[SingleItemResponse],
     auth: Any = django_auth,
 ) -> Decorator:
-    def decorator(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
+    def wrapper(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
         router_decorator: Decorator = router.get(
             url, response=get_response(response_type), auth=auth
         )
         return router_decorator(func)
 
-    return decorator
+    return wrapper
 
 
 def unpaginated_list(
