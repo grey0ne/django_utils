@@ -138,11 +138,6 @@ STORAGES: dict[str, Any] = {
     "staticfiles": LOCAL_STATIC_STORAGE
 }
 
-STATICFILES_DIRS = (
-    os.path.join(SOURCE_DIR, 'static'),
-)
-
-
 TEMPLATES: list[dict[str, Any]] = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
