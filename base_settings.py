@@ -7,8 +7,13 @@ from copy import deepcopy
 import os
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+import sys
 
 django_stubs_ext.monkeypatch()
+
+PROJECT_DOMAIN = config_get_str('PROJECT_DOMAIN')
+PROJECT_NAME = config_get_str('PROJECT_NAME')
+PROJECT_VERSION = config_get_str('PROJECT_VERSION', '0')
 
 ROOT_URLCONF = 'application.urls'
 WSGI_APPLICATION = 'application.wsgi.application'
@@ -29,16 +34,41 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+if 'migrate' in sys.argv:
+    db_options = {}
+else:
+    db_options: dict[str, Any] = {
+        "options": "-c statement_timeout=500",
+        "pool": True
+    } 
+
+
 DATABASES: dict[str, Any] = {
     "default": {
-        "NAME": config_get_str('DATABASE_NAME'),
-        "USER": config_get_str('DATABASE_USER'),
-        "HOST": config_get_str('DATABASE_HOST'),
+        "NAME": config_get_str('DATABASE_NAME', default=PROJECT_NAME),
+        "USER": config_get_str('DATABASE_USER', default=PROJECT_NAME),
+        "HOST": config_get_str('DATABASE_HOST', default=f'{PROJECT_NAME}-postgres'),
         "PORT": config_get_str('DATABASE_PORT', default='5432'),
-        "PASSWORD": config_get_str('DATABASE_PASSWORD'),
+        "PASSWORD": config_get_str('DATABASE_PASSWORD', default=PROJECT_NAME),
         "ENGINE": "django.db.backends.postgresql",
+        "OPTIONS": db_options
     }
 }
+
+AUTHENTICATION_BACKENDS = (
+    'application.backends.AsyncModelBackend',
+)
+
+MIDDLEWARE = [
+    'dataorm.middleware.DomainRoutingMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 USE_I18N = True
 USE_L10N = True
@@ -46,9 +76,6 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-PROJECT_DOMAIN = config_get_str('PROJECT_DOMAIN')
-PROJECT_NAME = config_get_str('PROJECT_NAME')
-PROJECT_VERSION = config_get_str('PROJECT_VERSION', '0')
 
 CSRF_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [f'https://{PROJECT_DOMAIN}', ]
