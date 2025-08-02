@@ -2,7 +2,8 @@ import base64
 from django.core.files.base import ContentFile
 from typing import Any
 
-def base64_to_file(data: str, name: str) -> ContentFile[Any]:
+
+def base64_to_file(data: str, name: str) -> ContentFile[bytes]:
     splitted = data.split(';base64,')
     if len(splitted) == 2:
         format, imgstr = splitted

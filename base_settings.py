@@ -34,12 +34,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+POOL_OPTIONS: dict[str, int] = {
+    "min_size": 2,  # Minimum number of connections in the pool
+    "max_size": 4,  # Maximum number of connections in the pool
+    "timeout": 10,  # Timeout in seconds for acquiring a connection
+}
+
 if 'migrate' in sys.argv:
     db_options = {}
 else:
     db_options: dict[str, Any] = {
         "options": "-c statement_timeout=500",
-        "pool": True
+        "pool": POOL_OPTIONS
     } 
 
 
