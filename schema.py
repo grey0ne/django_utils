@@ -38,6 +38,7 @@ URLAnnotation = 'URLAnnotation'
 URLSchema = Annotated[str, URLAnnotation]
 
 ExternalAnnotation = 'ExternalField'
+ExternalField = Annotated[T, ExternalAnnotation]
 
 @dataclass(kw_only=True, slots=True, frozen=True)
 class Error:

@@ -71,7 +71,10 @@ def dataclass_from_model_instance(instance: models.Model, type_class: Type[Resul
         if is_model_schema(field_type):
             kw[field.name] = dataclass_from_model_instance(field_data, field_type)
         elif is_url_field(field_type):
-            kw[field.name] = default_storage.url(field_data.name)
+            if field_data.name is None:
+                kw[field.name] = None
+            else:
+                kw[field.name] = default_storage.url(field_data.name)
         else:
             kw[field.name] = field_data
     return type_class(**kw)
