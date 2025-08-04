@@ -10,14 +10,18 @@ class UserNotAuthenticatedError(Exception):
     """Custom exception for unauthenticated user access."""
     pass
 
-
-async def async_get_user(request: HttpRequest) -> User:
-    user_pk = User._meta.pk
-    if user_pk is None:
+def get_user_id_from_request(request: HttpRequest) -> int | None:
+    user_pk = User._meta.pk # type: ignore
+    if user_pk is None: # type: ignore
         raise ValueError("User model does not have a primary key defined.")
     if SESSION_KEY not in request.session:
+        return None
+    return user_pk.to_python(request.session[SESSION_KEY])
+
+async def async_get_user(request: HttpRequest) -> User:
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
         raise UserNotAuthenticatedError("User is not authenticated.")
-    user_id = user_pk.to_python(request.session[SESSION_KEY])
     return await User.objects.aget(pk=user_id)
 
 class AsyncSessionAuth(APIKeyCookie):
