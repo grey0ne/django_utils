@@ -1,6 +1,7 @@
 import base64
 from django.core.files.base import ContentFile
-from typing import Any
+from django.core.files.storage import default_storage
+from django.core.files.base import File
 
 
 def base64_to_file(data: str, name: str) -> ContentFile[bytes]:
@@ -15,3 +16,6 @@ def base64_to_file(data: str, name: str) -> ContentFile[bytes]:
 
     return ContentFile(base64.b64decode(imgstr), name=name)
 
+def open_s3_file(file_name: str) -> File[bytes]:
+    # TODO add context manager to close file
+    return default_storage.open(file_name, 'rb') # type: ignore
