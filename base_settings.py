@@ -100,12 +100,19 @@ ALLOWED_HOSTS: list[str] = [
 ] + EXTRA_DOMAINS
 
 
-S3_ACCESS_KEY_ID = config_get("S3_ACCESS_KEY_ID")
-S3_SECRET_KEY = config_get("S3_SECRET_KEY")
+# URL prefix is needed in development
+DEFAULT_MEDIA_DOMAIN = f'media.{PROJECT_DOMAIN}/{PROJECT_NAME}-media' if DEBUG else f'media.{PROJECT_DOMAIN}'
+DEFAULT_S3_KEY = f'{PROJECT_NAME}_minio' if DEBUG else None
+DEFAULT_S3_SECRET = f'{PROJECT_NAME}_minio' if DEBUG else None
+DEFAULT_S3_SIGNATURE = 's3' if DEBUG else 'v4'
+
+
+S3_ACCESS_KEY_ID = config_get("S3_ACCESS_KEY_ID", default=DEFAULT_S3_KEY)
+S3_SECRET_KEY = config_get("S3_SECRET_KEY", default=DEFAULT_S3_SECRET)
 S3_ENDPOINT = config_get("S3_ENDPOINT_URL", default=f'http://{PROJECT_NAME}-minio:9000')
-S3_MEDIA_DOMAIN = config_get("S3_MEDIA_DOMAIN", default=f'media.{PROJECT_DOMAIN}')
+S3_MEDIA_DOMAIN = config_get("S3_MEDIA_DOMAIN", default=DEFAULT_MEDIA_DOMAIN)
 S3_STATIC_DOMAIN = config_get("S3_STATIC_DOMAIN", default=f'static.{PROJECT_DOMAIN}')
-S3_SIGNATURE_VERSION = config_get("S3_SIGNATURE_VERSION", default='v4')
+S3_SIGNATURE_VERSION = config_get("S3_SIGNATURE_VERSION", default=DEFAULT_S3_SIGNATURE)
 S3_ACL = config_get("S3_ACL", default='private')
 S3_MEDIA_BUCKET = config_get("S3_MEDIA_BUCKET", default=f'{PROJECT_NAME}-media')
 S3_STATIC_BUCKET = config_get("S3_STATIC_BUCKET", default=f'{PROJECT_NAME}-static')
