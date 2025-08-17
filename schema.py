@@ -71,3 +71,9 @@ LocalizedStringSchema = TypedDict('LocalizedStringSchema', {
     'es': str,
     'pt': str
 }, total=False)
+
+
+@dataclass(kw_only=True, slots=True, frozen=True)
+class LoginRequestData:
+    username: str
+    password: str
