@@ -1,5 +1,5 @@
 from django.db import models
-from dataorm.schema import LocalizedStringSchema
+from django_utils.schema import LocalizedStringSchema
 
 def LocalizedStringField(verbose_name: str) -> models.JSONField[LocalizedStringSchema]:
     return models.JSONField[LocalizedStringSchema](

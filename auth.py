@@ -2,11 +2,11 @@ from ninja.security.apikey import APIKeyCookie
 from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
-from dataorm.schema import AuthData
 from users.models import User
 from typing import Any
-from dataorm.jwt import decode_jwt_token
-from dataorm.constants import ACCESS_TOKEN_COOKIE_NAME
+from django_utils.schema import AuthData
+from django_utils.jwt import decode_jwt_token
+from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME
 
 class UserNotAuthenticatedError(Exception):
     """Custom exception for unauthenticated user access."""

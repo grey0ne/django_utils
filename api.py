@@ -3,10 +3,10 @@ from django.db import models
 from ninja import Router
 from ninja.pagination import paginate # type: ignore paginate does not support typing
 from ninja.errors import HttpError
-from dataorm.auth import django_auth
-from dataorm.queries import typed_data_list
-from dataorm.pagination import PaginationBase, IDPagination, DateIDPagination
-from dataorm.schema import (
+from django_utils.auth import django_auth
+from django_utils.queries import typed_data_list
+from django_utils.pagination import PaginationBase, IDPagination, DateIDPagination
+from django_utils.schema import (
     Error, TransformSingleFunc, Decorator, SingleItemResponse, TransformListFunc, DataclassProtocol
 )
 

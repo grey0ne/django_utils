@@ -1,7 +1,7 @@
 from ninja.pagination import PaginationBase
 from typing import Any, Type, Sequence
-from dataorm.schema import DataclassProtocol, TransformListFunc, ModelProtocol
-from dataorm.queries import typed_data_list
+from django_utils.schema import DataclassProtocol, TransformListFunc, ModelProtocol
+from django_utils.queries import typed_data_list
 from datetime import datetime
 from django.db import models
 from django.db.models import Q

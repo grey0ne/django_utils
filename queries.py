@@ -11,12 +11,12 @@ from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import Q
 
-from dataorm.schema import (
+from django_utils.schema import (
     NestedDict, JsonSchema, FlatDict, ResultKey,
     DataclassProtocol, ResultType, FieldName
 )
-from dataorm.helpers import base64_to_file
-from dataorm.queries_helpers import (
+from django_utils.helpers import base64_to_file
+from django_utils.queries_helpers import (
     is_json_schema_dict, is_json_schema_list, remove_optional_from_type,
     is_json_schema, is_url_field, is_file_field, is_external_field
 )

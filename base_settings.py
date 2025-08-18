@@ -1,7 +1,7 @@
 
 import django_stubs_ext
 
-from dataorm.settings_helpers import config_get, config_get_str
+from django_utils.settings_helpers import config_get, config_get_str
 from typing import Any
 from copy import deepcopy
 import os
@@ -66,7 +66,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 MIDDLEWARE = [
-    'dataorm.middleware.DomainRoutingMiddleware',
+    'django_utils.middleware.DomainRoutingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

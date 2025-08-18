@@ -4,10 +4,10 @@ from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.contrib.auth import aauthenticate
 from users.models import User
-from dataorm.api import action
-from dataorm.jwt import create_access_token, decode_jwt_token
-from dataorm.schema import LoginRequestData, EmptyResponse
-from dataorm.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
+from django_utils.api import action
+from django_utils.jwt import create_access_token, decode_jwt_token
+from django_utils.schema import LoginRequestData, EmptyResponse
+from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
 
 auth_router = Router()
 

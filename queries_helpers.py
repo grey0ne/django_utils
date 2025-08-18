@@ -1,5 +1,5 @@
 from typing import Any, get_args, get_origin
-from dataorm.schema import (
+from django_utils.schema import (
     JsonSchema, URLAnnotation, Base64FileAnnotation, ExternalAnnotation
 )
 
