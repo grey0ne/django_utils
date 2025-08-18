@@ -77,3 +77,12 @@ LocalizedStringSchema = TypedDict('LocalizedStringSchema', {
 class LoginRequestData:
     username: str
     password: str
+
+@dataclass(kw_only=True, slots=True, frozen=True)
+class TranslationRequestData:
+    locale: str
+    text: str
+
+@dataclass(kw_only=True, slots=True, frozen=True)
+class TranslationResponseData:
+    translation: str

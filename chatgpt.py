@@ -17,3 +17,14 @@ async def analyze_image(image_data: bytes, prompt: str, api_key: str) -> str | N
         ]
     )
     return response.choices[0].message.content
+
+
+async def text_prompt(prompt: str, api_key: str) -> str | None:
+    client = AsyncOpenAI(api_key=api_key)
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content

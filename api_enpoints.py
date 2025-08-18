@@ -3,13 +3,15 @@ from ninja.errors import HttpError
 from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.contrib.auth import aauthenticate
-from users.models import User
 from django_utils.api import action
 from django_utils.jwt import create_access_token, decode_jwt_token
-from django_utils.schema import LoginRequestData, EmptyResponse
+from django_utils.schema import LoginRequestData, EmptyResponse, TranslationRequestData, TranslationResponseData
 from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
+from django_utils.chatgpt import text_prompt
+from users.models import User
 
 auth_router = Router()
+translation_router = Router()
 
 async def authenticate_user(request: HttpRequest, username: str, password: str) -> User:
     """
@@ -60,3 +62,24 @@ async def refresh_access_token_endpoint(request: HttpRequest, response: HttpResp
     set_access_token_cookie(response, new_access_token)
 
     return EmptyResponse()
+
+
+TRANSLATION_PROMPT_TEMPLATE = """
+Переведи нижеследующий текст на {language}. Ответ должен содержать только перевод, без дополнительных комментариев.
+{text}
+"""
+
+LOCALES_MAP = {
+    'ru': 'Русский',
+    'en': 'Английский',
+    'es': 'Испанский',
+}
+
+@action(translation_router, url='/get_translation', response_type=TranslationResponseData)
+async def get_translation(request: HttpRequest, data: Body[TranslationRequestData]):
+    language = LOCALES_MAP[data.locale]
+    prompt = TRANSLATION_PROMPT_TEMPLATE.format(language=language, text=data.text)
+    translation = await text_prompt(prompt, settings.OPENAI_API_KEY)
+    if translation is None:
+        raise HttpError(400, 'Failed to get translation')
+    return TranslationResponseData(translation=translation)
