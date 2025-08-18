@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.contrib.auth import aauthenticate
 from django_utils.api import action
+from django_utils.auth import async_get_user
 from django_utils.jwt import create_access_token, decode_jwt_token
 from django_utils.schema import LoginRequestData, EmptyResponse, TranslationRequestData, TranslationResponseData
 from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
@@ -77,6 +78,10 @@ LOCALES_MAP = {
 
 @action(translation_router, url='/get_translation', response_type=TranslationResponseData)
 async def get_translation(request: HttpRequest, data: Body[TranslationRequestData]):
+    user = await async_get_user(request)
+    if not user.is_superuser:
+        raise HttpError(403, 'Forbidden')
+
     language = LOCALES_MAP[data.locale]
     prompt = TRANSLATION_PROMPT_TEMPLATE.format(language=language, text=data.text)
     translation = await text_prompt(prompt, settings.OPENAI_API_KEY)
