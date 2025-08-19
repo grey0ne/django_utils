@@ -37,6 +37,7 @@ ResultType = TypeVar("ResultType", bound=DataclassProtocol)
 URLAnnotation = 'URLAnnotation'
 URLSchema = Annotated[str, URLAnnotation]
 
+# This annotation is used to mark fields that are not part of the model
 ExternalAnnotation = 'ExternalField'
 ExternalField = Annotated[T, ExternalAnnotation]
 

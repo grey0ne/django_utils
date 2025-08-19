@@ -22,19 +22,7 @@ def get_user_id_from_session(request: HttpRequest) -> int | None:
     return user_pk.to_python(request.session[SESSION_KEY])
 
 
-def get_user_id_from_jwt(request: HttpRequest) -> int | None:
-    access_token = request.COOKIES.get(ACCESS_TOKEN_COOKIE_NAME)
-    if access_token is None:
-        return None
-    payload = decode_jwt_token(access_token, expected_type="access")
-    if payload is None:
-        return None
-    return payload["user_id"]
-
-
 def get_user_id_from_request(request: HttpRequest) -> int | None:
-    if settings.JWT_ENABLED:
-        return get_user_id_from_jwt(request)
     return get_user_id_from_session(request)
 
 
