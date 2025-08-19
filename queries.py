@@ -402,7 +402,10 @@ def get_model_data_from_request(request_data: Body[DataclassProtocol], file_name
         field_type = remove_optional_from_type(field.type)
         field_data = getattr(request_data, field.name)
         if is_file_field(field_type):
-            model_data[field.name] = base64_to_file(field_data, name=file_name_handler(field.name, field_data))
+            if field_data is not None and field_data == '':
+                model_data[field.name] = None
+            else:
+                model_data[field.name] = base64_to_file(field_data, name=file_name_handler(field.name, field_data))
         else:
             model_data[field.name] = field_data
     return model_data
