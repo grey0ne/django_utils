@@ -22,7 +22,7 @@ LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Europe/Moscow'
 
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_ENGINE = "django_utils.jwt"
 
 SOURCE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_DIR = os.path.dirname(SOURCE_DIR)
@@ -62,7 +62,7 @@ DATABASES: dict[str, Any] = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    'application.backends.AsyncModelBackend',
+    'django_utils.auth_backends.AsyncModelBackend',
 )
 
 MIDDLEWARE = [
@@ -193,9 +193,8 @@ AUTH_USER_MODEL = 'users.User'
 
 SESSION_COOKIE_AGE = 31622400 * 4  # 4 Years
 
+
 JWT_SECRET = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_EXP_DELTA_SECONDS = 60 * 10  # 10 Minutes
 JWT_REFRESH_EXP_DELTA_SECONDS = 31622400 * 4  # 4 Years
-
-JWT_ENABLED = True
