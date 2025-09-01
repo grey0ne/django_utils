@@ -68,7 +68,7 @@ AUTHENTICATION_BACKENDS = (
 MIDDLEWARE = [
     'django_utils.middleware.DomainRoutingMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django_utils.middleware.JwtSessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -198,3 +198,5 @@ JWT_SECRET = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_EXP_DELTA_SECONDS = 60 * 10  # 10 Minutes
 JWT_REFRESH_EXP_DELTA_SECONDS = 31622400 * 4  # 4 Years
+
+USER_DATA_COOKIE_NAME = 'user_data'
