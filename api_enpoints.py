@@ -6,7 +6,9 @@ from django.contrib.auth import aauthenticate
 from django_utils.api import action
 from django_utils.auth import async_get_user
 from django_utils.jwt import create_access_token, decode_jwt_token
-from django_utils.schema import LoginRequestData, EmptyResponse, TranslationRequestData, TranslationResponseData
+from django_utils.schema import (
+    LoginRequestData, EmptyResponse, TranslationRequestData, TranslationResponseData
+)
 from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
 from django_utils.chatgpt import text_prompt
 from users.models import User
@@ -40,6 +42,12 @@ async def login_endpoint(request: HttpRequest, data: Body[LoginRequestData], res
 
     set_access_token_cookie(response, access_token)
 
+    return EmptyResponse()
+
+
+@action(auth_router, url='/logout', response_type=EmptyResponse)
+async def logout_endpoint(request: HttpRequest, response: HttpResponse):
+    await request.session.aflush()
     return EmptyResponse()
 
 
