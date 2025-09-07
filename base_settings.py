@@ -68,9 +68,9 @@ AUTHENTICATION_BACKENDS = (
 MIDDLEWARE = [
     'django_utils.middleware.DomainRoutingMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'django_utils.middleware.JwtSessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django_utils.middleware.JwtSessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
