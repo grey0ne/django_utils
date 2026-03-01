@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from django.db import models
 from typing import TypeVar, Protocol, ClassVar, Any, Callable, Sequence, Annotated, TypedDict, Coroutine
+from enum import StrEnum
 
 TransformListFunc = Callable[[models.QuerySet[Any]], Coroutine[Any, Any, Sequence[Any]]]
 TransformSingleFunc = Callable[[models.QuerySet[Any]], Coroutine[Any, Any, Any]]
@@ -63,6 +64,21 @@ Base64File = Annotated[str, Base64FileAnnotation]
 class FileUploadData:
     uploaded_file: Base64File
     file_name: str
+
+class Locale(StrEnum):
+    RU = 'ru'
+    EN = 'en'
+    DE = 'de'
+    ES = 'es'
+    PT = 'pt'
+
+LOCALES = [
+    (Locale.RU, 'Русский'),
+    (Locale.EN, 'Английский'),
+    (Locale.DE, 'Немецкий'),
+    (Locale.ES, 'Испанский'),
+    (Locale.PT, 'Португальский'),
+]
 
 
 LocalizedStringSchema = TypedDict('LocalizedStringSchema', {
