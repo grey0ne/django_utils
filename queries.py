@@ -1,6 +1,5 @@
 from collections import defaultdict
-from dataclasses import fields, is_dataclass
-from dataclasses import _MISSING_TYPE # type: ignore
+from dataclasses import fields, is_dataclass, MISSING
 from functools import reduce
 from typing import Any, Sequence, Type, TypeVar, get_args, Callable
 from ninja import Body
@@ -55,7 +54,7 @@ def has_default_value(field: Any) -> bool:
         Checks if dataclass field has default value or default factory
         This is used to skip fields that are not present in the model instance
     """
-    return not isinstance(field.default, _MISSING_TYPE) or not isinstance(field.default_factory, _MISSING_TYPE)
+    return not field.default is MISSING or not field.default_factory is MISSING
 
 
 def dataclass_from_model_instance(instance: models.Model, type_class: Type[ResultType]) -> ResultType:
