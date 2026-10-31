@@ -68,9 +68,9 @@ AUTHENTICATION_BACKENDS = (
 MIDDLEWARE = [
     'django_utils.middleware.DomainRoutingMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django_utils.middleware.JwtSessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -82,6 +82,7 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 50  # 50MB
 
 CSRF_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [f'https://{PROJECT_DOMAIN}', ]
@@ -198,3 +199,5 @@ JWT_SECRET = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_EXP_DELTA_SECONDS = 60 * 10  # 10 Minutes
 JWT_REFRESH_EXP_DELTA_SECONDS = 31622400 * 4  # 4 Years
+
+USER_DATA_COOKIE_NAME = 'user_data'
