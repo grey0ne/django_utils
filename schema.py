@@ -50,6 +50,10 @@ class Error:
 class EmptyResponse:
     detail: str = ''
 
+@dataclass(kw_only=True, slots=True, frozen=True)
+class CsrfTokenResponse:
+    csrf_token: str
+
 Decorator = Callable[[Callable[..., Any]], Callable[..., Any]]
 
 @dataclass(kw_only=True, slots=True, frozen=True)

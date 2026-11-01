@@ -2,12 +2,13 @@ from ninja import Router, Body
 from ninja.errors import HttpError
 from django.http import HttpRequest, HttpResponse
 from django.conf import settings
+from django.middleware.csrf import get_token
 from django.contrib.auth import aauthenticate
-from django_utils.api import action
+from django_utils.api import action, get_response
 from django_utils.auth import async_get_user
 from django_utils.jwt import create_access_token, decode_jwt_token
 from django_utils.schema import (
-    LoginRequestData, EmptyResponse, TranslationRequestData, TranslationResponseData
+    LoginRequestData, EmptyResponse, CsrfTokenResponse, TranslationRequestData, TranslationResponseData
 )
 from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
 from django_utils.chatgpt import text_prompt
@@ -43,6 +44,15 @@ async def login_endpoint(request: HttpRequest, data: Body[LoginRequestData], res
     set_access_token_cookie(response, access_token)
 
     return EmptyResponse()
+
+
+@auth_router.get('/csrf', response=get_response(CsrfTokenResponse), auth=None)
+async def csrf_token_endpoint(request: HttpRequest):
+    """
+    Returns CSRF token and sets csrftoken cookie.
+    Needed for POST forms to Django views, e.g. social auth login (/login/<backend>/)
+    """
+    return CsrfTokenResponse(csrf_token=get_token(request))
 
 
 @action(auth_router, url='/logout', response_type=EmptyResponse)

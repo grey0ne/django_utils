@@ -1,7 +1,7 @@
 from typing import Any, Callable, Type
 from django.db import models
 from ninja import Router
-from ninja.pagination import paginate # type: ignore paginate does not support typing
+from ninja.pagination import paginate # type: ignore  # paginate does not support typing
 from ninja.errors import HttpError
 from django_utils.auth import django_auth
 from django_utils.queries import typed_data_list
@@ -88,7 +88,7 @@ def api_list(
         router_decorator: Decorator = router.get(
             url, response=get_response(list[response_type]), auth=auth
         )
-        pagination_decorator: Any = paginate( # type: ignore paginate does not support typing properly
+        pagination_decorator: Any = paginate( # type: ignore  # paginate does not support typing properly
             pagination,
             response_type=response_type,
             date_field=date_field,

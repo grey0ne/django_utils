@@ -100,7 +100,7 @@ async def bulk_create_wrapper(
         objs_to_create,
         batch_size=batch_size,
         ignore_conflicts=ignore_conflicts,
-        update_conflicts=update_conflicts, # type: ignore Error in stubs
+        update_conflicts=update_conflicts, # type: ignore  # Error in stubs
         unique_fields=unique_fields,
         update_fields=update_fields,
     )
