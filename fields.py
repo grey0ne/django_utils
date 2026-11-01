@@ -6,7 +6,7 @@ def LocalizedStringField(verbose_name: str) -> models.JSONField[LocalizedStringS
         null=True, blank=True, verbose_name=verbose_name
     )
 
-def LocaleField(verbose_name: str, default: str = Locale.EN) -> models.CharField[str, str]:
+def LocaleField(verbose_name: str, default: str = Locale.EN) -> models.CharField[str | None, str | None]:
     return models.CharField(
         null=True, blank=True, verbose_name=verbose_name, max_length=2, choices=LOCALES, default=default
     )
