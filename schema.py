@@ -19,7 +19,6 @@ class ModelProtocol:
     id: IdType
 
 SingleItemResponse = TypeVar('SingleItemResponse', bound=DataclassProtocol)
-ResultType = TypeVar('ResultType', bound=ModelProtocol)
 
 ResultKey = str | int
 

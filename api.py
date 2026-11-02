@@ -1,3 +1,4 @@
+from types import GenericAlias
 from typing import Any, Callable, Type
 from django.db import models
 from ninja import Router
@@ -11,7 +12,7 @@ from django_utils.schema import (
 )
 
 
-def get_response(response_type: type) -> dict[int, type]:
+def get_response(response_type: type | GenericAlias) -> dict[int, type | GenericAlias]:
     return {200: response_type, 401: Error, 400: Error, 404: Error}
 
 
@@ -68,7 +69,7 @@ def unpaginated_list(
 ) -> Decorator:
     def decorator(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
         router_decorator: Decorator = router.get(
-            url, response=get_response(list[response_type]), auth=auth
+            url, response=get_response(GenericAlias(list, (response_type,))), auth=auth
         )
         return router_decorator(func)
     return decorator
@@ -86,7 +87,7 @@ def api_list(
 ) -> Decorator:
     def decorator(func: Callable[..., models.QuerySet[Any]]) -> Callable[..., Any]:
         router_decorator: Decorator = router.get(
-            url, response=get_response(list[response_type]), auth=auth
+            url, response=get_response(GenericAlias(list, (response_type,))), auth=auth
         )
         pagination_decorator: Any = paginate( # type: ignore  # paginate does not support typing properly
             pagination,

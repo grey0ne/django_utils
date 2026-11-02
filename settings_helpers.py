@@ -1,7 +1,7 @@
 import os
 
 def config_get(key: str, **kwargs: str | bool | None) -> str | bool | None:
-    value = os.environ.get(key)
+    value: str | bool | None = os.environ.get(key)
     if value is None or value == '':
         if 'default' in kwargs:
             value = kwargs['default']

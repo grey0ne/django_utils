@@ -40,10 +40,11 @@ POOL_OPTIONS: dict[str, int] = {
     "timeout": 10,  # Timeout in seconds for acquiring a connection
 }
 
+db_options: dict[str, Any]
 if 'migrate' in sys.argv:
     db_options = {}
 else:
-    db_options: dict[str, Any] = {
+    db_options = {
         "options": "-c statement_timeout=500",
         "pool": POOL_OPTIONS
     } 

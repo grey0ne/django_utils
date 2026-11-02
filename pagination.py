@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from ninja.pagination import PaginationBase
 from typing import Any, Type, Sequence
 from django_utils.schema import DataclassProtocol, TransformListFunc, ModelProtocol
@@ -21,7 +22,9 @@ class EfficientPagination[ResultType: DataclassProtocol](PaginationBase):
         self.transform = transform
         super().__init__(**kwargs)
 
-    def paginate_queryset(self, queryset: models.QuerySet[Any], pagination: Any, **params: Any) -> Any:
+    def paginate_queryset(
+        self, queryset: models.QuerySet[Any], pagination: Any, request: HttpRequest, **params: Any
+    ) -> Any:
         raise NotImplementedError('Syncronous pagination is not supported in this project. apaginate_queryset should be implemented.')
 
     async def transform_queryset(
@@ -42,7 +45,7 @@ class IDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType]):
         per_page: int = DEFAULT_PER_PAGE
 
     class Output(PaginationBase.Output):
-        items: list[ResultType]
+        items: list[Any]  # ninja replaces it with List[<response schema>] per endpoint
         last_id: int | None
 
     def get_result(self, result: Sequence[ResultType]) -> dict[str, Any]:
@@ -79,7 +82,7 @@ class DateIDPagination[ResultType: ModelProtocol](EfficientPagination[ResultType
         per_page: int = DEFAULT_PER_PAGE
 
     class Output(PaginationBase.Output):
-        items: list[ResultType]
+        items: list[Any]  # ninja replaces it with List[<response schema>] per endpoint
         last_id: int | None
         last_timestamp: int | None
 

@@ -4,16 +4,26 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.sessions.backends.base import UpdateError
 from django.contrib.sessions.exceptions import SessionInterrupted
 from django.utils.http import http_date
-from typing import Callable, Any
+from typing import Callable, Any, Coroutine
+import importlib
 import time
 import json
 import base64
 from asgiref.sync import async_to_sync
 
-try:
-    from users.frontend_user_data import get_user_data
-except ImportError:
-    get_user_data = None
+UserDataGetter = Callable[[HttpRequest], Coroutine[Any, Any, dict[str, Any] | None]]
+
+
+def load_user_data_getter() -> UserDataGetter | None:
+    """users/frontend_user_data.py is optional in host projects"""
+    try:
+        module = importlib.import_module('users.frontend_user_data')
+    except ImportError:
+        return None
+    return getattr(module, 'get_user_data', None)
+
+
+get_user_data = load_user_data_getter()
 
 
 class DomainRoutingMiddleware:
@@ -76,9 +86,8 @@ class JwtSessionMiddleware(SessionMiddleware):
                     # This is used only on the client side for speeding things up, for server side we use signed session token
                     user_data = self.get_user_data_for_frontend(request)
                     if user_data is not None:
-                        data = json.dumps(user_data).encode('utf-8')
-                        data = base64.b64encode(data).decode('ascii')
-                        
+                        data = base64.b64encode(json.dumps(user_data).encode('utf-8')).decode('ascii')
+
                         response.set_cookie(
                             cookie_name,
                             data,

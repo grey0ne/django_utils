@@ -11,7 +11,6 @@ from django_utils.schema import (
     LoginRequestData, EmptyResponse, CsrfTokenResponse, TranslationRequestData, TranslationResponseData
 )
 from django_utils.constants import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME
-from django_utils.chatgpt import text_prompt
 from users.models import User
 
 auth_router = Router()
@@ -100,9 +99,15 @@ async def get_translation(request: HttpRequest, data: Body[TranslationRequestDat
     if not user.is_superuser:
         raise HttpError(403, 'Forbidden')
 
+    api_key = getattr(settings, 'OPENAI_API_KEY', None)
+    if not api_key:
+        raise HttpError(400, 'Translation is not configured')
+    # openai is an optional dependency, the other endpoints work without it
+    from django_utils.chatgpt import text_prompt
+
     language = LOCALES_MAP[data.locale]
     prompt = TRANSLATION_PROMPT_TEMPLATE.format(language=language, text=data.text)
-    translation = await text_prompt(prompt, settings.OPENAI_API_KEY)
+    translation = await text_prompt(prompt, api_key)
     if translation is None:
         raise HttpError(400, 'Failed to get translation')
     return TranslationResponseData(translation=translation)

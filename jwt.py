@@ -1,13 +1,13 @@
 from django.conf import settings
 from django.contrib.sessions.backends.base import SessionBase
-from typing import TypedDict, Any, Literal
+from typing import TypedDict, Any, Literal, NotRequired, cast
 import jwt
 import datetime
 
 
 class JwtPayload(TypedDict):
     user_id: int
-    username: str
+    username: NotRequired[str]  # access tokens only
     exp: datetime.datetime
     type: Literal["access"] | Literal["refresh"]
 
@@ -39,7 +39,7 @@ def decode_jwt_token(token: str, expected_type: Literal["access"] | Literal["ref
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         if payload["type"] != expected_type:
             return None
-        return payload
+        return cast(JwtPayload, payload)
     except jwt.ExpiredSignatureError:
         return None   # token is expired
     except jwt.InvalidTokenError:
@@ -95,7 +95,7 @@ class SessionStore(SessionBase):
         the current request.
         """
         self._session_key = ""
-        self._session_cache = {}
+        self._session_cache: dict[str, Any] = {}
         self.modified = True
 
     async def adelete(self, session_key: str | None = None):

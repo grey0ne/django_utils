@@ -22,5 +22,7 @@ Host projects import it as a top-level package (`from django_utils.api import ..
 
 - Response/request schemas are frozen `@dataclass`es (`slots=True, kw_only=True`), not ninja `Schema` classes.
 - Code is async-first (async views and ORM calls).
-- Strictly typed for mypy with `django-stubs`; some `# type: ignore` are needed where ninja lacks typing.
+- Strictly typed for mypy with `django-stubs`: the package must pass mypy cleanly in host projects (`--explicit-package-bases`). `# type: ignore` only where ninja/stubs lack typing or for the optional `openai` dependency.
+- `ResultType` is defined once, in `schema.py` (bound to `DataclassProtocol`); redefining a TypeVar breaks every generic function using it.
+- `openai` is optional: only `chatgpt.py` imports it, endpoints import it lazily.
 - No tests live here; verify changes against a host project (`./deploy/dc django check`, mypy).

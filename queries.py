@@ -22,7 +22,6 @@ from django_utils.queries_helpers import (
 
 
 ModelType = TypeVar('ModelType', bound=models.Model)
-ResultType = TypeVar('ResultType', bound=DataclassProtocol)
 
 
 def dict_from_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
@@ -96,7 +95,7 @@ async def bulk_create_wrapper(
     batch_size: int = 100,
 ) -> list[ModelType]:
     # Wrapper is necessary for compatibility with different DB backends
-    return await model.objects.abulk_create(
+    return await model._default_manager.abulk_create(
         objs_to_create,
         batch_size=batch_size,
         ignore_conflicts=ignore_conflicts,

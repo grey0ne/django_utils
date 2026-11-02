@@ -1,4 +1,4 @@
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI  # type: ignore[import-not-found, unused-ignore]  # optional dependency
 from enum import StrEnum
 from io import BytesIO
 import base64
