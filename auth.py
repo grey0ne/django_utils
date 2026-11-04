@@ -30,14 +30,18 @@ async def async_get_user(request: HttpRequest) -> User:
     user_id = get_user_id_from_request(request)
     if user_id is None:
         raise UserNotAuthenticatedError("User is not authenticated.")
-    return await User.objects.aget(pk=user_id)
+    try:
+        return await User.objects.aget(pk=user_id)
+    except User.DoesNotExist:
+        # The session outlived its user (deleted, or the database was recreated)
+        raise UserNotAuthenticatedError("User of the session does not exist.")
 
 
 async def async_get_user_or_none(request: HttpRequest) -> User | None:
-    user_id = get_user_id_from_request(request)
-    if user_id is None:
+    try:
+        return await async_get_user(request)
+    except UserNotAuthenticatedError:
         return None
-    return await User.objects.aget(pk=user_id)
 
 
 class AsyncSessionAuth(APIKeyCookie):
