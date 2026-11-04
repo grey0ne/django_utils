@@ -6,6 +6,7 @@ Host projects import it as a top-level package (`from django_utils.api import ..
 
 ## Modules
 
+- `errors.py` — `ApiError(status, code, message, **params)`: an error shown to the user, answered as `{"code", "detail", "params"}` (the frontend translates `code`, see next_utils `useFormatApiError`). Register `add_api_error_handler(api)` on the project's `NinjaAPI`.
 - `api.py` — endpoint decorators wrapping a ninja `Router`: `single_item`, `id_paginated`, `unpaginated_list`, `action` (POST), plus `get_single_item_or_404`. Default auth is `django_auth` from `auth.py`; pass `auth=None` for public endpoints.
 - `queries.py` — the "dataorm" core: builds `.values()` queries from dataclass field definitions and returns typed dataclasses (`typed_data_list`, `typed_data_dict`, `dict_from_dataclass`, nested/related field handling, file/base64 fields).
 - `queries_helpers.py` — type introspection helpers used by `queries.py`.
