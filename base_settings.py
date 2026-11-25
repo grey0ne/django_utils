@@ -181,11 +181,16 @@ SENTRY_FRONTEND_DSN = config_get('SENTRY_FRONTEND_DSN', default=None)
 
 SENTRY_DSN = config_get('SENTRY_DSN', default=None)
 if SENTRY_DSN is not None:
+    # sentry-sdk 3 removed send_default_pii (an unknown option raises TypeError) and collects
+    # the user info by default (data_collection.user_info); 2.x needs the flag for it.
+    sentry_pii_options: dict[str, Any] = (
+        {'send_default_pii': True} if int(sentry_sdk.VERSION.split('.')[0]) < 3 else {}
+    )
     sentry_sdk.init(
         dsn=str(SENTRY_DSN),
         integrations=[DjangoIntegration()],
-        send_default_pii=True,
-        release=PROJECT_VERSION
+        release=PROJECT_VERSION,
+        **sentry_pii_options,
     )
 
 SESSION_COOKIE_SECURE = not DEBUG
